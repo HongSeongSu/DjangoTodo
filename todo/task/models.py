@@ -1,3 +1,5 @@
+from datetime import date, timezone, datetime
+
 from django.db import models
 from django.utils.timezone import now
 
@@ -13,12 +15,15 @@ class Todo(models.Model):
     note = models.TextField(blank=True)
     deadline = models.DateTimeField(blank=True, null=True)
     completed = models.BooleanField(default=False)
-    priority = models.CharField(max_length=1, choices=PRIORITY)
+    priority = models.CharField(max_length=1, choices=PRIORITY, default='2')
 
     created_date = models.DateTimeField(default=now)
 
     def __str__(self):
         return self.title
 
+    def date_now(self):
+        return date.today()
+
     class Meta:
-        ordering = ["priority"]
+        ordering = ["priority", 'deadline']

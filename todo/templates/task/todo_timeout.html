@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Todo</h1>
+
+<div class="container">
+    <nav class="navbar-header">
+        <ul class="nav nav-tabs">
+            <li role="presentation"><a href="{% url 'task:list' %}">Home</a></li>
+            <li role="presentation" class="active"><a href="{% url 'task:timeout' %}">Timeout</a></li>
+        </ul>
+    </nav>
+</div>
+
+
+<a href="{% url 'task:create' %}" class="btn btn-default">Add Todo</a>
+
+{% for obj in object_list %}
+    {% if obj.date_now|date:"Y M d" > obj.deadline|date:"Y M d" %}
+
+    <div>
+        <table class="table table-hover">
+            <tr>
+                <td>{{ obj.get_priority_display }} 할 일: {{ obj.title }}</td>
+                <td>자세한 내용:{{ obj.note }}</td>
+                <td>언제까지: {{ obj.deadline }}</td>
+                <td><a href="{% url 'task:complete' obj.id %}">{{ obj.completed|yesno:"Complete, Uncomplete" }}</a></td>
+            </tr>
+        </table>
+    </div>
+
+{% endif %}
+{% endfor %}
+
+{% endblock %}

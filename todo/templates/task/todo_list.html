@@ -1,33 +1,43 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Todo</h1>
+<nav class="navbar navbar-expand-lg navbar-light bg-light" style="margin-bottom: 10px;">
+    <a class="navbar-brand" href="">Todo</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
 
-<div class="container">
-    <nav class="navbar-header">
-        <ul class="nav nav-tabs">
-            <li role="presentation" class="active"><a href="{% url 'task:list' %}">Home</a></li>
-            <li role="presentation"><a href="{% url 'task:timeout' %}">Timeout</a></li>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="{% url 'task:list' %}">Home</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'task:timeout' %}">Timeout</a>
+            </li>
+
         </ul>
-    </nav>
-</div>
-
-
-
-<a href="{% url 'task:create' %}" class="btn btn-default" role="button">Add Todo</a>
-{% for obj in object_list %}
-    {% if obj.date_now|date:"Y M d" < obj.deadline|date:"Y M d" %}
-    <div>
-        <table class="table table-striped">
-            <tr>
-                <td>{{ obj.get_priority_display }} 할 일: {{ obj.title }}</td>
-                <td>자세한 내용:{{ obj.note }}</td>
-                <td>언제까지: {{ obj.deadline }}</td>
-                <td><a href="{% url 'task:complete' obj.id %}">{{ obj.completed|yesno:"Complete, Uncomplete" }}</a></td>
-            </tr>
-        </table>
     </div>
-    {% endif %}
+</nav>
+
+<div class="card" style="margin-bottom: 10px;">
+    <a class="btn btn-primary" href="{% url 'task:create' %}" role="button">+</a>
+</div>
+{% for obj in object_list %}
+{% if obj.date_now|date:"Y M d" < obj.deadline|date:"Y M d" %}
+<div class="card" style="margin-bottom: 10px;">
+    <div class="card-body">
+        <h5 class="card-title">{{ obj.get_priority_display }} : {{ obj.title }}</h5>
+        <h6 class="card-subtitle mb-2 text-muted">{{ obj.deadline|date:"Y M d D" }}까지</h6>
+        <p class="card-text">{{ obj.note }}</p>
+        <a href="{% url 'task:complete' obj.id %}" class="btn btn-secondary btn-lg active" role="button"
+           aria-pressed="true" style="width: 140px;">{{ obj.completed|yesno:"Complete, Uncomplete" }}</a>
+        <a href="{% url 'task:delete' obj.id %}" class="btn btn-secondary btn-lg active" role="button"
+           aria-pressed="true" style="width: 140px;">Delete</a>
+    </div>
+</div>
+{% endif %}
 {% endfor %}
 
 {% endblock %}

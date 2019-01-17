@@ -1,4 +1,6 @@
 from django import forms
+from django.shortcuts import redirect
+
 from .models import Todo, PRIORITY
 
 
@@ -6,10 +8,6 @@ class TodoForm(forms.ModelForm):
     class Meta:
         model = Todo
         fields = ['title', 'note', 'deadline', 'priority']
-        # fields = '__all__'
-        # widgets = {
-        #     'deadline': DatePickerWidget,
-        # }
 
     title = forms.CharField(
         label='할 일',
@@ -50,9 +48,3 @@ class TodoForm(forms.ModelForm):
             }
         )
     )
-
-
-# class TodoCompleteForm(forms.ModelForm):
-#     class Meta:
-#         model = Todo
-#         fields = ['completed']

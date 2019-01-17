@@ -1,8 +1,6 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import redirect
 from django.urls import reverse
-from django.views import View
-from django.views.generic import ListView, CreateView, TemplateView, RedirectView, FormView, DeleteView
-from django.views.generic.detail import SingleObjectMixin
+from django.views.generic import ListView, CreateView
 
 from .models import Todo
 from .forms import TodoForm
@@ -38,37 +36,16 @@ def task_complete(request, id):
     else:
         task.completed = 1
     task.save()
-    return redirect('task:list')
+    if request.META.get('HTTP_REFERER')[-5:-1] == 'list':
+        return redirect('task:list')
+    elif request.META.get('HTTP_REFERER')[-8:-1] == 'timeout':
+        return redirect('task:timeout')
 
 
-class TaskListsView(ListView):
-    model = Todo
-    template_name = 'task/todo.html'
+def task_delete(request, id):
+    Todo.objects.filter(id=id).delete()
 
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form'] = TodoForm
-        return context
-
-
-class TodoFormView(SingleObjectMixin, FormView):
-    template_name = 'task/todo.html'
-    form_class = TodoForm
-    model = Todo
-
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        return super().post(request, *args, **kwargs)
-
-    def get_success_url(self):
-        return reverse('todo', kwargs={'pk': self.object.pk})
-
-
-class TaskView(View):
-    def get(self, request, *args, **kwargs):
-        view = TaskListsView.as_view()
-        return view(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        view = TodoFormView.as_view()
-        return view(request, *args, **kwargs)
+    if request.META.get('HTTP_REFERER')[-5:-1] == 'list':
+        return redirect('task:list')
+    elif request.META.get('HTTP_REFERER')[-8:-1] == 'timeout':
+        return redirect('task:timeout')

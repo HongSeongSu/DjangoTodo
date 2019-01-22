@@ -1,32 +1,140 @@
-from django.shortcuts import redirect
-from django.urls import reverse
-from django.views.generic import ListView, CreateView
+from datetime import datetime
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.shortcuts import redirect, render
+from django.urls import reverse, reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.debug import sensitive_post_parameters
+from django.views.generic import ListView, CreateView, FormView, RedirectView
 
 from .models import Todo
-from .forms import TodoForm
+from .forms import TodoForm, CreateUserForm
 
 
-class TaskCreateView(CreateView):
-    template_name = 'task/todo_create.html'
-    form_class = TodoForm
-    queryset = Todo.objects.all()
+class TodoCountMixin(object):
+    def get_queryset(self):
+        return Todo.objects.filter(author=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['list'] = Todo.objects.filter(author=self.request.user).count()
+        context['overtime'] = Todo.objects.filter(author=self.request.user, deadline__lt=datetime.now()).count()
+        context['important'] = Todo.objects.filter(author=self.request.user, priority='1').count()
+        context['normal'] = Todo.objects.filter(author=self.request.user, priority='2').count()
+        context['minor'] = Todo.objects.filter(author=self.request.user, priority='3').count()
+        return context
+
+
+class SignupView(CreateView):
+    template_name = 'registration/signup.html'
+    form_class = CreateUserForm
+    success_url = reverse_lazy('task:list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['list'] = '　'
+        context['overtime'] = '　'
+        return context
+
+
+class LoginView(FormView):
+    template_name = 'registration/login.html'
+    form_class = AuthenticationForm
+    success_url = reverse_lazy('task:list')
+
+    @method_decorator(sensitive_post_parameters('password'))
+    @method_decorator(csrf_protect)
+    @method_decorator(never_cache)
+    def dispatch(self, request, *args, **kwargs):
+        request.session.set_test_cookie()
+        return super(LoginView, self).dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        print(form.cleaned_data)
+        auth_login(self.request, form.get_user())
+        return super(LoginView, self).form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['list'] = '　'
+        context['overtime'] = '　'
+        return context
+
+
+class LogoutView(RedirectView):
+    url = ''
+    pattern_name = 'task:list'
+
+    def get(self, request, *args, **kwargs):
+        auth_logout(request)
+        return super(LogoutView, self).get(request, *args, **kwargs)
+
+
+
+class TaskCreateView(TodoCountMixin, CreateView):
+    template_name = 'task/todo_create.html'
+    form_class = TodoForm
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(TaskCreateView, self).dispatch(*args, **kwargs)
+
+    def form_valid(self, form):
+        obj = form.save(commit=False)
+        obj.author = self.request.user
+        obj.save()
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse('task:list')
 
 
-class TaskListView(ListView):
+class TaskListView(TodoCountMixin, ListView):
     template_name = 'task/todo_list.html'
     queryset = Todo.objects.all()
 
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(TaskListView, self).dispatch(*args, **kwargs)
 
-class TaskTimeoutListView(ListView):
-    template_name = 'task/todo_timeout.html'
-    queryset = Todo.objects.all()
+
+class TaskTimeoutListView(TodoCountMixin, ListView):
+    template_name = 'task/todo_list.html'
+    queryset = Todo.objects.filter(deadline__lt=datetime.now())
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(TaskTimeoutListView, self).dispatch(*args, **kwargs)
+
+
+class TaskImportantListView(TodoCountMixin, ListView):
+    template_name = 'task/todo_list.html'
+    queryset = Todo.objects.filter(priority='1')
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(TaskImportantListView, self).dispatch(*args, **kwargs)
+
+
+class TaskNormalListView(TodoCountMixin, ListView):
+    template_name = 'task/todo_list.html'
+    queryset = Todo.objects.filter(priority='2')
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(TaskNormalListView, self).dispatch(*args, **kwargs)
+
+
+class TaskMinorListView(TodoCountMixin, ListView):
+    template_name = 'task/todo_list.html'
+    queryset = Todo.objects.filter(priority='3')
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(TaskMinorListView, self).dispatch(*args, **kwargs)
 
 
 def task_complete(request, id):

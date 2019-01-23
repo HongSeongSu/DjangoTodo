@@ -73,7 +73,6 @@ class LogoutView(RedirectView):
         return super(LogoutView, self).get(request, *args, **kwargs)
 
 
-
 class TaskCreateView(TodoCountMixin, CreateView):
     template_name = 'task/todo_create.html'
     form_class = TodoForm
@@ -94,47 +93,57 @@ class TaskCreateView(TodoCountMixin, CreateView):
 
 class TaskListView(TodoCountMixin, ListView):
     template_name = 'task/todo_list.html'
-    queryset = Todo.objects.all()
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(TaskListView, self).dispatch(*args, **kwargs)
 
+    def get_queryset(self):
+        return Todo.objects.filter(author=self.request.user)
+
 
 class TaskTimeoutListView(TodoCountMixin, ListView):
     template_name = 'task/todo_list.html'
-    queryset = Todo.objects.filter(deadline__lt=datetime.now())
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(TaskTimeoutListView, self).dispatch(*args, **kwargs)
 
+    def get_queryset(self):
+        return Todo.objects.filter(author=self.request.user, deadline__lt=datetime.now())
+
 
 class TaskImportantListView(TodoCountMixin, ListView):
     template_name = 'task/todo_list.html'
-    queryset = Todo.objects.filter(priority='1')
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(TaskImportantListView, self).dispatch(*args, **kwargs)
 
+    def get_queryset(self):
+        return Todo.objects.filter(author=self.request.user, priority='1')
+
 
 class TaskNormalListView(TodoCountMixin, ListView):
     template_name = 'task/todo_list.html'
-    queryset = Todo.objects.filter(priority='2')
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(TaskNormalListView, self).dispatch(*args, **kwargs)
 
+    def get_queryset(self):
+        return Todo.objects.filter(author=self.request.user, priority='2')
+
 
 class TaskMinorListView(TodoCountMixin, ListView):
     template_name = 'task/todo_list.html'
-    queryset = Todo.objects.filter(priority='3')
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(TaskMinorListView, self).dispatch(*args, **kwargs)
+
+    def get_queryset(self):
+        return Todo.objects.filter(author=self.request.user, priority='3')
 
 
 def task_complete(request, id):

@@ -34,12 +34,6 @@ class SignupView(CreateView):
     form_class = CreateUserForm
     success_url = reverse_lazy('task:list')
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['list'] = '　'
-        context['overtime'] = '　'
-        return context
-
 
 class LoginView(FormView):
     template_name = 'registration/login.html'
@@ -56,12 +50,6 @@ class LoginView(FormView):
     def form_valid(self, form):
         auth_login(self.request, form.get_user())
         return super(LoginView, self).form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['list'] = '　'
-        context['overtime'] = '　'
-        return context
 
 
 class LogoutView(RedirectView):

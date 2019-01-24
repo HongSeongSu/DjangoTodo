@@ -10,23 +10,30 @@
     <div class="card-body">
         <h5 class="card-title">
             {% if obj.priority == '1' %}
-                <span class="badge badge-warning">{{ obj.get_priority_display }}</span>
+            <span class="badge badge-warning">{{ obj.get_priority_display }}</span>
             {% elif obj.priority == '2' %}
-                <span class="badge badge-primary">{{ obj.get_priority_display }}</span>
+            <span class="badge badge-primary">{{ obj.get_priority_display }}</span>
             {% else %}
-                <span class="badge badge-light">{{ obj.get_priority_display }}</span>
+            <span class="badge badge-light">{{ obj.get_priority_display }}</span>
             {% endif %}
             : {{ obj.title }}</h5>
         {% if obj.date_now|date:"Y M d" > obj.deadline|date:"Y M d" %}
-        <h6 class="card-subtitle mb-2 text-muted"><del>{{ obj.deadline|date:"Y M d D" }}</del>지남</h6>
+        <h6 class="card-subtitle mb-2 text-muted">
+            <del>{{ obj.deadline|date:"Y M d D" }}</del>
+            지남
+        </h6>
         {% else %}
-            <h6 class="card-subtitle mb-2 text-muted">{{ obj.deadline|date:"Y M d D" }}까지</h6>
+        <h6 class="card-subtitle mb-2 text-muted">{{ obj.deadline|date:"Y M d D" }}까지</h6>
         {% endif %}
         <p class="card-text">{{ obj.note }}</p>
-        <a href="{% url 'task:complete' obj.id %}" class="btn btn-secondary btn-sm active" role="button"
-           aria-pressed="true" style="width: 140px;">{{ obj.completed|yesno:"Complete, Uncomplete" }}</a>
-        <a href="{% url 'task:delete' obj.id %}" class="btn btn-secondary btn-sm active" role="button"
-           aria-pressed="true" style="width: 140px;">Delete</a>
+
+        {% if obj.completed == False %}
+            <a href="{% url 'task:complete' obj.id %}" class="btn btn-outline-secondary btn-sm" role="button" aria-pressed="true" style="width: 140px;">{{ obj.completed|yesno:"완료, 미완료" }}</a>
+        {% else %}
+            <a href="{% url 'task:complete' obj.id %}" class="btn btn-outline-success btn-sm" role="button" aria-pressed="true" style="width: 140px;">{{ obj.completed|yesno:"완료, 미완료" }}</a>
+        {% endif %}
+        <a href="{% url 'task:delete' obj.id %}" class="btn btn-outline-danger btn-sm" role="button"
+               aria-pressed="true" style="width: 140px;">Delete</a>
     </div>
 </div>
 {% endfor %}

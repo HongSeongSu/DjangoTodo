@@ -3,21 +3,21 @@ from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
+from django.views import View
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.generic import ListView, CreateView, FormView, RedirectView
+from django.views.generic import ListView, CreateView, FormView, RedirectView, UpdateView
 
 from .models import Todo
 from .forms import TodoForm, CreateUserForm
 
 
 class TodoCountMixin(object):
-    def get_queryset(self):
-        return Todo.objects.filter(author=self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -134,23 +134,16 @@ class TaskMinorListView(TodoCountMixin, ListView):
         return Todo.objects.filter(author=self.request.user, priority='3')
 
 
-def task_complete(request, id):
-    task = Todo.objects.get(id=id)
-    if task.completed:
-        task.completed = 0
-    else:
-        task.completed = 1
-    task.save()
-    if request.META.get('HTTP_REFERER')[-5:-1] == 'list':
-        return redirect('task:list')
-    elif request.META.get('HTTP_REFERER')[-8:-1] == 'timeout':
-        return redirect('task:timeout')
+class TaskUpdateView(View):
+    def dispatch(self, request, id):
+        task = Todo.objects.get(id=id)
+        task.completed = not task.completed
+        task.save()
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
-def task_delete(request, id):
-    Todo.objects.filter(id=id).delete()
+class TaskDeleteView(View):
 
-    if request.META.get('HTTP_REFERER')[-5:-1] == 'list':
-        return redirect('task:list')
-    elif request.META.get('HTTP_REFERER')[-8:-1] == 'timeout':
-        return redirect('task:timeout')
+    def dispatch(self, request, id):
+        Todo.objects.filter(id=id).delete()
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
